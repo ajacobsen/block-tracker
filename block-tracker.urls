@@ -1,0 +1,5 @@
+# Format: URL<TAB>regex
+http://winhelp2002.mvps.org/hosts.txt	s/\r// \n /^0/!d \n s/#.*$//
+http://someonewhocares.org/hosts/zero/hosts	/^0/!d \n s/#.*$//
+http://sysctl.org/cameleon/hosts	/^127.0.0.1.*localhost$/d \n s/^127.0.0.1/0.0.0.0/ \n s/[\t]//g \n /^0/!d
+http://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&useip=0.0.0.0&mimetype=plaintext	/^0/!d
