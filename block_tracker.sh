@@ -33,11 +33,20 @@ EXECUTABLE_NAME=${INSTALL_NAME/_/-}                     # executable has hypen i
 GITHUB_URL="github.com"
 GITHUB_RAW_URL="raw.githubusercontent.com"
 GITHUB_BRANCH="master"
-#GITHUB_REPO="ajacobsen/block-tracker"
-GITHUB_REPO="framps/block-tracker"
+GITHUB_REPO="ajacobsen/${EXECUTABLE_NAME}"
+
+ETC_HOSTS_D_DIR="/etc/hosts.d"
+ETC_HOSTS="/etc/hosts"
+CONFIG_FILE="./.${EXECUTABLE_NAME}.conf"				# allow to overwrite constants e.g. repo
+if [[ -f ${CONFIG_FILE} ]]; then
+	source ${CONFIG_FILE}
+fi
+
+# various dependent constants
+
 GIT_REPO_URL="https://$GITHUB_URL/$GITHUB_REPO"
 GITHUB_LATEST_RELEASE_URL="https://api.${GITHUB_URL}/repos/${GITHUB_REPO}/releases/latest"
-GITHUB_TRACKER_URLs="block-tracker.urls"
+GITHUB_TRACKER_URLs="${EXECUTABLE_NAME}.urls"
 GITHUB_TRACKER_URLs_DOWNLOAD_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${GITHUB_BRANCH}/${GITHUB_TRACKER_URLs}"
 if [ ${RELEASED} == true ]; then
     GIT_INSTALL_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${VERSION}/${INSTALL_NAME}.sh"
@@ -45,12 +54,12 @@ else
     GIT_INSTALL_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${GITHUB_BRANCH}/${INSTALL_NAME}.sh"
 fi
 
-ETC_HOSTS_D_DIR="/etc/hosts.d"
-ETC_HOSTS="/etc/hosts"
-FILTER_CONFIG_FILE="/etc/block-tracker.filter"
+FILTER_CONFIG_FILE="/etc/${EXECUTABLE_NAME}.filter"
+CHECKSUM_FILE="/etc/${EXECUTABLE_NAME}.checksum"
 ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[12345]*-*" 
 
 declare -A TRACKER_URLs
+declare -A TRACKER_CHECKSUMs
 
 # runtime messages
 
