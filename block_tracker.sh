@@ -244,7 +244,7 @@ function abort() {
 function askYesNo() { # messageid message_parameters
     local response
     local yesno=$(get_message "$MSG_YES_NO")
-    ask_from_console "$1" ${@:2} ${yesno}
+    ask_from_console "$1" "${@:2}" "${yesno}"
     yesno=${yesno,,}
     local yes="${yesno:0:1}"
     read -sn 1 response
@@ -265,7 +265,7 @@ function uninstall() {
         exit 1
     fi
 
-    ! if ! askYesNo ${MSG_CONFIRM_UNINSTALL}; then
+    ! if ! askYesNo "${MSG_CONFIRM_UNINSTALL}"; then
         exit 1
     fi
 
@@ -514,12 +514,10 @@ function handleErrorTrap() {
 function logStack () {
 	local i=0
 	local frames=${#BASH_LINENO[@]}
-	echo "*************************************************"
 	for ((i=frames-2; i>=0; i--)); do
-		echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]}
-		sed -n "${BASH_LINENO[i]}{s/^/    /;p}" "${BASH_SOURCE[i+1]}"
+		echo -n '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]}
+		sed -En "${BASH_LINENO[i]}{s/^([ \t]*)/ -> /;p}" "${BASH_SOURCE[i+1]}"
 	done
-	echo "*************************************************"
 }
 
 function write_to_console() { #messagenumber parm1 ... parmn
