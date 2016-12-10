@@ -48,6 +48,7 @@ fi
 ETC_HOSTS_D_DIR="/etc/hosts.d"
 ETC_HOSTS="/etc/hosts"
 FILTER_CONFIG_FILE="/etc/block-tracker.filter"
+ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[12345]*-*" 
 
 declare -A TRACKER_URLs
 
@@ -138,8 +139,8 @@ MSG_UNKNOWN_OPTION=$((MSG_CNT++))
 MSG_EN[$MSG_UNKNOWN_OPTION]="Unknown option %b"
 MSG_DE[$MSG_UNKNOWN_OPTION]="Unbekannte Option %b"
 MSG_CLEANING_UP_TRACKER_FILES=$((MSG_CNT++))
-MSG_EN[$MSG_CLEANING_UP_TRACKER_FILES]="Cleaning up tracker %b files"
-MSG_DE[$MSG_CLEANING_UP_TRACKER_FILES]="%b Tracker Dateien werden erneuert"
+MSG_EN[$MSG_CLEANING_UP_TRACKER_FILES]="Cleaning up %b old tracker files"
+MSG_DE[$MSG_CLEANING_UP_TRACKER_FILES]="%b alte Tracker Dateien werden gelöscht"
 MSG_UNDEFINED=$((MSG_CNT++))
 MSG_EN[$MSG_UNDEFINED]="Undefined message number %b. Please report this error."
 MSG_DE[$MSG_UNDEFINED]="Unbekannte Meldungsnummer %b. Bitte melde diesen Fehler."
@@ -311,7 +312,7 @@ function process_etc() { # resultfile
         exit 1
     fi
 
-    if [[ $(ls -1 ${ETC_HOSTS_D_DIR}/1*-* | wc -l) == "0" ]]; then
+    if [[ $(ls -1 ${ETC_HOSTS_TRACKER_FILTER} | wc -l 2>/dev/null) == "0" ]]; then
         write_to_console "${MSG_NOT_INSTALLED}" "${EXECUTABLE_NAME}"
         help
         exit 1
@@ -438,7 +439,7 @@ function retrieveTrackerUrls() {
 
 }
 
-function download () {
+function downloadTrackerFiles () {
 	
 	retrieveTrackerUrls
 	
@@ -452,10 +453,12 @@ function download () {
     local url regex src
 
 	# remove old configs
-	oldFilesCount=$(ls -1 ${ETC_HOSTS_D_DIR}/1*-* | wc -l)
+	set +e
+	oldFilesCount=$(ls -1 ${ETC_HOSTS_TRACKER_FILTER} 2>/dev/null | wc -l)
+	set -e
 	if (( oldFilesCount > 0 )); then
 		write_to_console "${MSG_CLEANING_UP_TRACKER_FILES}" "$oldFilesCount"
-    	for file in $(ls -1 ${ETC_HOSTS_D_DIR}/1*-* 2>/dev/null); do
+    	for file in $(ls -1 $ETC_HOSTS_TRACKER_FILTER 2>/dev/null); do
 			rm $file &>/dev/null
 		done
 	fi
@@ -481,7 +484,7 @@ function execute () {
         exit 1
     fi
 
-    download
+    downloadTrackerFiles
     enable
 
 }
