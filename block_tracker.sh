@@ -70,9 +70,12 @@ MSG_DE[$MSG_DISABLED_SUCCESS]="${EXECUTABLE_NAME} ist nun ausgeschaltet"
 MSG_ENABLED_SUCCESS=$((MSG_CNT++))
 MSG_EN[$MSG_ENABLED_SUCCESS]="${EXECUTABLE_NAME} is now enabled"
 MSG_DE[$MSG_ENABLED_SUCCESS]="${EXECUTABLE_NAME} ist nun eingeschaltet"
+MSG_DOWNLOADING_URL=$((MSG_CNT++))
+MSG_EN[$MSG_DOWNLOADING_URL]="Downloading %b"
+MSG_DE[$MSG_DOWNLOADING_URL]="%b wird runtergeladen"
 MSG_PROCESSING_URL=$((MSG_CNT++))
-MSG_EN[$MSG_PROCESSING_URL]="Downloading and processing %b"
-MSG_DE[$MSG_PROCESSING_URL]="%b wird runtergeladen und bearbeitet"
+MSG_EN[$MSG_PROCESSING_URL]="Downloading and processing tracker file %b"
+MSG_DE[$MSG_PROCESSING_URL]="Tracker Datei %b wird runtergeladen und bearbeitet"
 MSG_APPLIED_FILTER=$((MSG_CNT++))
 MSG_EN[$MSG_APPLIED_FILTER]="Filter %b removes %b lines"
 MSG_DE[$MSG_APPLIED_FILTER]="Filter %b entfernt %b Zeilen"
@@ -426,6 +429,7 @@ function retrieveTrackerUrls() {
 	local url regex
 	local tmpfile=$(mktemp)
 	
+	write_to_console ${MSG_DOWNLOADING_URL} "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
 	if ! wget -qO ${tmpfile} ${GITHUB_TRACKER_URLs_DOWNLOAD_URL}; then
 		write_to_console "${MSG_DOWNLOAD_FAILED}" "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
 		abort
