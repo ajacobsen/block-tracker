@@ -149,8 +149,8 @@ MSG_DE[$MSG_UPGRADE]="%b auf Version %b aktualisieren? [%b]"
 MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
 MSG_UNEXPECTED_ERROR=$((MSG_CNT++))
-MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured. Please report following stacktrace on ${GITHUB_ISSUES_URL}"
-MSG_DE[$MSG_UNEXPECTED_ERROR]="Ein nicht erwarteter Fehler trat auf. Bitte berichte diesen Stacktrace auf ${GITHUB_ISSUES_URL}"
+MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured in version %b. Please report following stacktrace on ${GITHUB_ISSUES_URL}"
+MSG_DE[$MSG_UNEXPECTED_ERROR]="Ein nicht erwarteter Fehler trat in version %b auf. Bitte berichte diesen Stacktrace auf ${GITHUB_ISSUES_URL}"
 MSG_CLEANING_UP_TRACKER_FILES=$((MSG_CNT++))
 MSG_EN[$MSG_CLEANING_UP_TRACKER_FILES]="Cleaning up %b old tracker files"
 MSG_DE[$MSG_CLEANING_UP_TRACKER_FILES]="%b alte Tracker Dateien werden gelöscht"
@@ -507,16 +507,16 @@ function get_message() { #messagenumber
 }
 
 function handleErrorTrap() {
-	write_to_console "${MSG_UNEXPECTED_ERROR}" 
+	write_to_console "${MSG_UNEXPECTED_ERROR}" "$VERSION"
 	logStack
 }
 
 function logStack () {
-	local i=0
+	local l=0
 	local frames=${#BASH_LINENO[@]}
-	for ((i=frames-2; i>=0; i--)); do
-		echo -n '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]}
-		sed -En "${BASH_LINENO[i]}{s/^([ \t]*)/ -> /;p}" "${BASH_SOURCE[i+1]}"
+	for ((l=frames-2; l>=0; l--)); do
+		echo '  File' \"${BASH_SOURCE[l+1]}\", line ${BASH_LINENO[l]}, in ${FUNCNAME[l+1]}
+#		sed -En "${BASH_LINENO[l]}{s/^([ \t]*)/: /;p}" "${BASH_SOURCE[l+1]}"
 	done
 }
 
