@@ -20,7 +20,7 @@
 # I acknowledge and I'm grateful to framps (framp at linux-tips-and-tricks dot de)
 # for his contribution to block_tracker.
 
-set -e -o pipefail                                      # see https://sipb.mit.edu/doc/safe-shell/
+set -e -o pipefail -o errtrace                          # see https://sipb.mit.edu/doc/safe-shell/
 
 VERSION="v0.0.4"
 RELEASED=false
@@ -37,7 +37,7 @@ GITHUB_REPO="ajacobsen/${EXECUTABLE_NAME}"
 
 ETC_HOSTS_D_DIR="/etc/hosts.d"
 ETC_HOSTS="/etc/hosts"
-CONFIG_FILE="./.${EXECUTABLE_NAME}.conf"				# allow to overwrite constants e.g. repo
+CONFIG_FILE="./.${EXECUTABLE_NAME}.conf"				# allow to overwrite constants e.g. GITHUB_REPO transparently
 if [[ -f ${CONFIG_FILE} ]]; then
 	source ${CONFIG_FILE}
 fi
@@ -59,7 +59,6 @@ CHECKSUM_FILE="/etc/${EXECUTABLE_NAME}.checksum"
 ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[12345]*-*" 
 
 declare -A TRACKER_URLs
-declare -A TRACKER_CHECKSUMs
 
 # runtime messages
 
@@ -148,8 +147,9 @@ MSG_DE[$MSG_UPGRADE]="%b auf Version %b aktualisieren? [%b]"
 
 MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
-MSG_EN[$MSG_UNKNOWN_OPTION]="Unknown option %b"
-MSG_DE[$MSG_UNKNOWN_OPTION]="Unbekannte Option %b"
+MSG_UNEXPECTED_ERROR=$((MSG_CNT++))
+MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured. See following stacktrace for details"
+MSG_DE[$MSG_UNEXPECTED_ERROR]="Nicht erwarteter Fehler trat auf. Der folgende Stacktrace liefert weitere Datails"
 MSG_CLEANING_UP_TRACKER_FILES=$((MSG_CNT++))
 MSG_EN[$MSG_CLEANING_UP_TRACKER_FILES]="Cleaning up %b old tracker files"
 MSG_DE[$MSG_CLEANING_UP_TRACKER_FILES]="%b alte Tracker Dateien werden gelöscht"
@@ -232,9 +232,6 @@ ${EXECUTABLE_NAME} -U
   -U, --update                  Aktualisiere auf neueste stabile Version
 
 Die vollständige Dokumentation ist unter https://ajacobsen.github.io/block-tracker/ verfügbar."
-MSG_MISSING_DEP=$((MSG_CNT++))
-MSG_EN[$MSG_MISSING_DEP]="You need %b to use this feature"
-MSG_DE[$MSG_MISSING_DEP]="Für diese Funktion wird %b benötigt"
 
 MSGVAR="MSG_$(tr '[:lower:]' '[:upper:]' <<< ${LANG:0:2})"
 
@@ -267,12 +264,10 @@ function uninstall() {
         exit 1
     fi
 
-    set +e              # TBD: hack
-    askYesNo ${MSG_CONFIRM_UNINSTALL}
+    ! askYesNo ${MSG_CONFIRM_UNINSTALL}
     if (( ! $? )); then
         exit 1
     fi
-    set -e
 
     write_to_console "${MSG_PROCESSING_UNINSTALL}" "${EXECUTABLE_NAME}"
     cp ${ETC_HOSTS_D_DIR}/00-hosts ${ETC_HOSTS}
@@ -283,12 +278,10 @@ function uninstall() {
 
 function install() {
     if [[ -f "${INSTALL_PATH}/${EXECUTABLE_NAME}" ]]; then
-        set +e          # TBD: hack
-        askYesNo "${MSG_REINSTALL}" "${EXECUTABLE_NAME}"
+        ! askYesNo "${MSG_REINSTALL}" "${EXECUTABLE_NAME}"
         if (( ! $? )); then
             exit 0
         fi
-        set -e
     fi
 
     doInstall "${GIT_INSTALL_URL}"
@@ -415,12 +408,10 @@ function get_latest_version() {
 		write_to_console "${MSG_CURRENT_VERSION}" "${EXECUTABLE_NAME}" "${VERSION}"
 		write_to_console "${MSG_LATEST_VERSION}" "${EXECUTABLE_NAME}" "${latest_version}"
 		local url="https://$GITHUB_RAW_URL/$GITHUB_REPO/${latest_version}/${INSTALL_NAME}.sh"
-		set +e          # TBD: hack
-		askYesNo "${MSG_UPGRADE}" "${EXECUTABLE_NAME}" "${latest_version}"
+		! askYesNo "${MSG_UPGRADE}" "${EXECUTABLE_NAME}" "${latest_version}"
 		if (( ! $? )); then
 			exit 0
 		fi
-		set -e
 	else
 		write_to_console "${MSG_NOT_INSTALLED}" "${EXECUTABLE_NAME}"
 		exit 0
@@ -430,7 +421,7 @@ function get_latest_version() {
 }
 
 function help() {
-    write_to_console "${MSG_HELP}"                          # TBD
+    write_to_console "${MSG_HELP}"         
 }
 
 function retrieveTrackerUrls() {
@@ -517,6 +508,22 @@ function get_message() { #messagenumber
     echo "$msg"
 }
 
+function errorTrap() {
+	write_to_console "${MSG_UNEXPECTED_ERROR}" 
+	logStack
+}
+
+function logStack () {
+	local i=0
+	local frames=${#BASH_LINENO[@]}
+	echo "*************************************************"
+	for ((i=frames-2; i>=0; i--)); do
+		echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]}
+		sed -n "${BASH_LINENO[i]}{s/^/    /;p}" "${BASH_SOURCE[i+1]}"
+	done
+	echo "*************************************************"
+}
+
 function write_to_console() { #messagenumber parm1 ... parmn
     local msgv msg msgn
     msgn=$1
@@ -550,6 +557,8 @@ if [ $UID -ne 0 ]; then
     write_to_console "${MSG_NOT_ROOT}"
     exit 1
 fi
+
+trap errorTrap ERR 
 
 use_filter=false
 basic_cmd_cnt=0
@@ -614,7 +623,7 @@ if [ $# -gt 0 ]; then
                 fi
                 shift ;;
             *)
-                write_to_console $MSG_UNKNOWN_OPTION "$1" # TBD should write help message with all accepted options
+                write_to_console $MSG_UNKNOWN_OPTION "$1" 
                 help
                 exit 1
                 ;;
