@@ -45,6 +45,7 @@ fi
 # various dependent constants
 
 GIT_REPO_URL="https://$GITHUB_URL/$GITHUB_REPO"
+GITHUB_ISSUES_URL="https://$GITHUB_URL/$GITHUB_REPO/issues"
 GITHUB_LATEST_RELEASE_URL="https://api.${GITHUB_URL}/repos/${GITHUB_REPO}/releases/latest"
 GITHUB_TRACKER_URLs="${EXECUTABLE_NAME}.urls"
 GITHUB_TRACKER_URLs_DOWNLOAD_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${GITHUB_BRANCH}/${GITHUB_TRACKER_URLs}"
@@ -64,8 +65,8 @@ declare -A TRACKER_URLs
 
 MSG_CNT=0
 MSG_DOWNLOAD_FAILED=$((MSG_CNT++))
-MSG_EN[$MSG_DOWNLOAD_FAILED]="WARNING! Failed to download %b!"
-MSG_DE[$MSG_DOWNLOAD_FAILED]="WARNUNG! Download von %b fehlgeschlagen!"
+MSG_EN[$MSG_DOWNLOAD_FAILED]="WARNING! Failed to download %b"
+MSG_DE[$MSG_DOWNLOAD_FAILED]="WARNUNG! Download von %b fehlgeschlagen"
 MSG_NOT_ROOT=$((MSG_CNT++))
 MSG_EN[$MSG_NOT_ROOT]="You have to be root!"
 MSG_DE[$MSG_NOT_ROOT]="Du musst root sein!"
@@ -148,8 +149,8 @@ MSG_DE[$MSG_UPGRADE]="%b auf Version %b aktualisieren? [%b]"
 MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
 MSG_UNEXPECTED_ERROR=$((MSG_CNT++))
-MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured. See following stacktrace for details"
-MSG_DE[$MSG_UNEXPECTED_ERROR]="Nicht erwarteter Fehler trat auf. Der folgende Stacktrace liefert weitere Datails"
+MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured. Please report following stacktrace on ${GITHUB_ISSUES_URL}"
+MSG_DE[$MSG_UNEXPECTED_ERROR]="Ein nicht erwarteter Fehler trat auf. Bitte berichte diesen Stacktrace auf ${GITHUB_ISSUES_URL}"
 MSG_CLEANING_UP_TRACKER_FILES=$((MSG_CNT++))
 MSG_EN[$MSG_CLEANING_UP_TRACKER_FILES]="Cleaning up %b old tracker files"
 MSG_DE[$MSG_CLEANING_UP_TRACKER_FILES]="%b alte Tracker Dateien werden gelöscht"
@@ -251,9 +252,9 @@ function askYesNo() { # messageid message_parameters
     echo
 
     if [[ ${response} == ${yes} ]]; then
-        return 1
-    else
         return 0
+    else
+        return 1
     fi
 }
 
@@ -264,8 +265,7 @@ function uninstall() {
         exit 1
     fi
 
-    ! askYesNo ${MSG_CONFIRM_UNINSTALL}
-    if (( ! $? )); then
+    ! if ! askYesNo ${MSG_CONFIRM_UNINSTALL}; then
         exit 1
     fi
 
@@ -278,8 +278,7 @@ function uninstall() {
 
 function install() {
     if [[ -f "${INSTALL_PATH}/${EXECUTABLE_NAME}" ]]; then
-        ! askYesNo "${MSG_REINSTALL}" "${EXECUTABLE_NAME}"
-        if (( ! $? )); then
+        ! if ! askYesNo "${MSG_REINSTALL}" "${EXECUTABLE_NAME}"; then
             exit 0
         fi
     fi
@@ -404,12 +403,11 @@ function invalid_option() {
 
 function get_latest_version() {
 	if [[ -f "${INSTALL_PATH}/${EXECUTABLE_NAME}" ]]; then
-		local latest_version=$(curl -s ${GITHUB_LATEST_RELEASE_URL} | grep 'tag_name' | cut -f 2 -d ':' | sed 's/[", ]//g')
+		! local latest_version=$(curl -s ${GITHUB_LATEST_RELEASE_URL} | grep 'tag_name' | cut -f 2 -d ':' | sed 's/[", ]//g')
 		write_to_console "${MSG_CURRENT_VERSION}" "${EXECUTABLE_NAME}" "${VERSION}"
 		write_to_console "${MSG_LATEST_VERSION}" "${EXECUTABLE_NAME}" "${latest_version}"
 		local url="https://$GITHUB_RAW_URL/$GITHUB_REPO/${latest_version}/${INSTALL_NAME}.sh"
-		! askYesNo "${MSG_UPGRADE}" "${EXECUTABLE_NAME}" "${latest_version}"
-		if (( ! $? )); then
+		! if ! askYesNo "${MSG_UPGRADE}" "${EXECUTABLE_NAME}" "${latest_version}"; then
 			exit 0
 		fi
 	else
@@ -508,7 +506,7 @@ function get_message() { #messagenumber
     echo "$msg"
 }
 
-function errorTrap() {
+function handleErrorTrap() {
 	write_to_console "${MSG_UNEXPECTED_ERROR}" 
 	logStack
 }
@@ -558,7 +556,7 @@ if [ $UID -ne 0 ]; then
     exit 1
 fi
 
-trap errorTrap ERR 
+trap handleErrorTrap ERR 
 
 use_filter=false
 basic_cmd_cnt=0
