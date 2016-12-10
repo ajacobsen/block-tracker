@@ -33,17 +33,23 @@ EXECUTABLE_NAME=${INSTALL_NAME/_/-}                     # executable has hypen i
 GITHUB_URL="github.com"
 GITHUB_RAW_URL="raw.githubusercontent.com"
 GITHUB_BRANCH="master"
-GITHUB_REPO="ajacobsen/block-tracker"
+#GITHUB_REPO="ajacobsen/block-tracker"
+GITHUB_REPO="framps/block-tracker"
 GIT_REPO_URL="https://$GITHUB_URL/$GITHUB_REPO"
 GITHUB_LATEST_RELEASE_URL="https://api.${GITHUB_URL}/repos/${GITHUB_REPO}/releases/latest"
+GITHUB_TRACKER_URLs="block-tracker.urls"
+GITHUB_TRACKER_URLs_DOWNLOAD_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${GITHUB_BRANCH}/${GITHUB_TRACKER_URLs}"
 if [ ${RELEASED} == true ]; then
     GIT_INSTALL_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${VERSION}/${INSTALL_NAME}.sh"
 else
     GIT_INSTALL_URL="https://$GITHUB_RAW_URL/$GITHUB_REPO/${GITHUB_BRANCH}/${INSTALL_NAME}.sh"
 fi
+
 ETC_HOSTS_D_DIR="/etc/hosts.d"
 ETC_HOSTS="/etc/hosts"
 FILTER_CONFIG_FILE="/etc/block-tracker.filter"
+
+declare -A TRACKER_URLs
 
 # runtime messages
 
@@ -131,6 +137,9 @@ MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
 MSG_EN[$MSG_UNKNOWN_OPTION]="Unknown option %b"
 MSG_DE[$MSG_UNKNOWN_OPTION]="Unbekannte Option %b"
+MSG_CLEANING_UP_TRACKER_FILES=$((MSG_CNT++))
+MSG_EN[$MSG_CLEANING_UP_TRACKER_FILES]="Cleaning up tracker %b files"
+MSG_DE[$MSG_CLEANING_UP_TRACKER_FILES]="%b Tracker Dateien werden erneuert"
 MSG_UNDEFINED=$((MSG_CNT++))
 MSG_EN[$MSG_UNDEFINED]="Undefined message number %b. Please report this error."
 MSG_DE[$MSG_UNDEFINED]="Unbekannte Meldungsnummer %b. Bitte melde diesen Fehler."
@@ -302,7 +311,7 @@ function process_etc() { # resultfile
         exit 1
     fi
 
-    if [[ $(ls -1 ${ETC_HOSTS_D_DIR}/[01234]0-* | wc -l) != "5" ]]; then
+    if [[ $(ls -1 ${ETC_HOSTS_D_DIR}/1*-* | wc -l) == "0" ]]; then
         write_to_console "${MSG_NOT_INSTALLED}" "${EXECUTABLE_NAME}"
         help
         exit 1
@@ -411,32 +420,57 @@ function help() {
     write_to_console "${MSG_HELP}"                          # TBD
 }
 
+function retrieveTrackerUrls() {
+	
+	local url regex
+	local tmpfile=$(mktemp)
+	
+	if ! wget -qO ${tmpfile} ${GITHUB_TRACKER_URLs_DOWNLOAD_URL}; then
+		write_to_console "${MSG_DOWNLOAD_FAILED}" "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
+		abort
+	fi
+	
+	while IFS=$'\t' read -r url regex; do
+		[[ $url =~ ^# ]] && continue			# skip comments
+		TRACKER_URLs[${url}]="$regex"
+	done < ${tmpfile}
+	rm ${tmpfile}
+
+}
+
 function download () {
+	
+	retrieveTrackerUrls
+	
     # Download der hosts Dateien
     # Entfernen von carriage returns
     # Entfernen von localhost und broadcast Adressen
     # Entfernen von allen Kommentaren
     # Entfernen aller Zeilen, die nicht mit 0.0.0.0 beginnen
     # Entfernen von Leerzeilen
-    write_to_console "${MSG_PROCESSING_URL}" "http://winhelp2002.mvps.org"
-    wget -qO - "http://winhelp2002.mvps.org/hosts.txt"| \
-    sed -e 's/\r//' -e '/^0/!d' -e 's/#.*$//'> "${ETC_HOSTS_D_DIR}/10-mvpblocklist" || \
-    ( write_to_console "${MSG_DOWNLOAD_FAILED}" "http://winhelp2002.mvps.org/hosts.txt"; abort )
+    
+    local url regex src
 
-    write_to_console "${MSG_PROCESSING_URL}" "http://someonewhocares.org"
-    wget -qO - "http://someonewhocares.org/hosts/zero/hosts"| \
-    sed -e '/^0/!d' -e 's/#.*$//' > "${ETC_HOSTS_D_DIR}/20-some1whocaresblocklist" || \
-    ( write_to_console "${MSG_DOWNLOAD_FAILED}" "http://someonewhocares.org/hosts/zero/hosts"; abort )
+	# remove old configs
+	oldFilesCount=$(ls -1 ${ETC_HOSTS_D_DIR}/1*-* | wc -l)
+	if (( oldFilesCount > 0 )); then
+		write_to_console "${MSG_CLEANING_UP_TRACKER_FILES}" "$oldFilesCount"
+    	for file in $(ls -1 ${ETC_HOSTS_D_DIR}/1*-* 2>/dev/null); do
+			rm $file &>/dev/null
+		done
+	fi
+	
+	local cnt=10
+	local tmpfile=$(mktemp)
 
-    write_to_console "${MSG_PROCESSING_URL}" "http://sysctl.org"
-    wget -qO - "http://sysctl.org/cameleon/hosts"| \
-    sed -e '/^127.0.0.1.*localhost$/d' -e 's/^127.0.0.1/0.0.0.0/' -e 's/[\t]//g' -e '/^0/!d' > "${ETC_HOSTS_D_DIR}/30-sysctlblocklist" || \
-    ( write_to_console "${MSG_DOWNLOAD_FAILED}" "http://sysctl.org/cameleon/hosts"; abort )
-
-    write_to_console "${MSG_PROCESSING_URL}" "http://pgl.yoyo.org"
-    wget -qO - "http://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&useip=0.0.0.0&mimetype=plaintext"| \
-    sed -e '/^0/!d' > "${ETC_HOSTS_D_DIR}/40-yoyo.orgblocklist" || \
-    ( write_to_console "${MSG_DOWNLOAD_FAILED}" "http://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&useip=0.0.0.0&mimetype=plaintext"; abort )
+    for url in "${!TRACKER_URLs[@]}"; do
+		regex="${TRACKER_URLs[$url]}"		
+		write_to_console "${MSG_PROCESSING_URL}" "$url"
+		wget -qO "${tmpfile}" "$url" || ( write_to_console "${MSG_DOWNLOAD_FAILED}" "$url"; abort )
+		printf "%b" "${regex}" | sed -f - ${src} > "${ETC_HOSTS_D_DIR}/${cnt}-blocklist"
+		: $(( cnt++ ))
+	done
+	rm $tmpfile
 
 }
 
