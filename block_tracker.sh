@@ -473,8 +473,11 @@ function downloadTrackerFiles () {
     for url in "${!TRACKER_URLs[@]}"; do
 		regex="${TRACKER_URLs[$url]}"		
 		write_to_console "${MSG_PROCESSING_URL}" "$url"
-		wget -qO "${tmpfile}" "$url" || ( write_to_console "${MSG_DOWNLOAD_FAILED}" "$url"; abort )
-		printf "%b" "${regex}" | sed -f - ${src} > "${ETC_HOSTS_D_DIR}/${cnt}-blocklist"
+		if ! wget -qO "${tmpfile}" "$url"; then
+			write_to_console "${MSG_DOWNLOAD_FAILED}" "$url"
+			abort
+		fi
+		printf "%b" "${regex}" | sed -f - ${tmpfile} > "${ETC_HOSTS_D_DIR}/${cnt}-blocklist"
 		: $(( cnt++ ))
 	done
 	rm $tmpfile
