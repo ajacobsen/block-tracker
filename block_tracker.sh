@@ -33,14 +33,11 @@ EXECUTABLE_NAME=${INSTALL_NAME/_/-}                     # executable has hypen i
 GITHUB_URL="github.com"
 GITHUB_RAW_URL="raw.githubusercontent.com"
 GITHUB_BRANCH="master"
-GITHUB_REPO="ajacobsen/${EXECUTABLE_NAME}"
+GITHUB_REPO_OWNER="${GITHUB_REPO_OWNER:-ajacobsen}"
+GITHUB_REPO="${GITHUB_REPO_OWNER}/${EXECUTABLE_NAME}"
 
 ETC_HOSTS_D_DIR="/etc/hosts.d"
 ETC_HOSTS="/etc/hosts"
-CONFIG_FILE="./.${EXECUTABLE_NAME}.conf"				# allow to overwrite constants e.g. GITHUB_REPO transparently
-if [[ -f ${CONFIG_FILE} ]]; then
-	source ${CONFIG_FILE}
-fi
 
 # various dependent constants
 
@@ -455,9 +452,7 @@ function downloadTrackerFiles () {
     local url regex src
 
 	# remove old configs
-	set +e
-	oldFilesCount=$(ls -1 ${ETC_HOSTS_TRACKER_FILTER} 2>/dev/null | wc -l)
-	set -e
+	! oldFilesCount=$(ls -1 ${ETC_HOSTS_TRACKER_FILTER} 2>/dev/null | wc -l)
 	if (( oldFilesCount > 0 )); then
 		write_to_console "${MSG_CLEANING_UP_TRACKER_FILES}" "$oldFilesCount"
     	for file in $(ls -1 $ETC_HOSTS_TRACKER_FILTER 2>/dev/null); do
