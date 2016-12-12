@@ -53,14 +53,7 @@ else
 fi
 
 FILTER_CONFIG_FILE="/etc/${EXECUTABLE_NAME}.filter"
-<<<<<<< HEAD
 ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[123456789]0-*"
-=======
-CHECKSUM_FILE="/etc/${EXECUTABLE_NAME}.checksum"
-ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[12345]*-*"
-
-declare -A TRACKER_URLs
->>>>>>> d7f64a65fa3d7b913b4e994c2d42acc3de462867
 
 # runtime messages
 
