@@ -107,7 +107,7 @@ MSG_LATEST_VERSION=$((MSG_CNT++))
 MSG_EN[$MSG_LATEST_VERSION]="%b latest stable version: %b"
 MSG_DE[$MSG_LATEST_VERSION]="Neueste stabile Version von %b: %b"
 
-  p# Messages for installer
+# Messages for installer
 
 MSG_CNT=100
 MSG_CONFIRM_UNINSTALL=$((MSG_CNT++))
@@ -397,6 +397,10 @@ function filtertest() {
 
 }
 
+function nop() {
+	:			# just display version number
+}
+
 function invalid_option() {
     write_to_console $MSG_OPTION_ERROR
     write_to_console $MSG_HELP
@@ -606,6 +610,11 @@ if [ $# -gt 0 ]; then
                 shift ;;
             --update|-U)
                 cmd="get_latest_version"
+                : $(( basic_cmd_cnt++ ))
+                filter_option_allowed=0
+                shift ;;
+            --version|-v)
+                cmd="nop"
                 : $(( basic_cmd_cnt++ ))
                 filter_option_allowed=0
                 shift ;;
