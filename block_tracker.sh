@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # *Credits*
-# I acknowledge and I'm grateful to framps (framp at linux-tips-and-tricks dot de)
+# I acknowledge and I'm grateful to framp (framp at linux-tips-and-tricks dot de)
 # for his contribution to block_tracker.
 
 set -e -o pipefail -o errtrace                          # see https://sipb.mit.edu/doc/safe-shell/
@@ -145,6 +145,11 @@ MSG_DE[$MSG_TRACKER_FILE_UPTODATE]="Datei %b ist aktuell, überspringe"
 
 MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
+MSG_EN[$MSG_UNKNOWN_OPTION]="Unknown option %b"
+MSG_DE[$MSG_UNKNOWN_OPTION]="Unbekannte Option %b"
+MSG_VERSION=$((MSG_CNT++))
+MSG_EN[$MSG_VERSION]="$EXECUTABLE_NAME - $VERSION"
+MSG_DE[$MSG_VERSION]="$EXECUTABLE_NAME - $VERSION"
 MSG_UNEXPECTED_ERROR=$((MSG_CNT++))
 MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured in version %b. Please report following stacktrace on ${GITHUB_ISSUES_URL}"
 MSG_DE[$MSG_UNEXPECTED_ERROR]="Ein nicht erwarteter Fehler trat in version %b auf. Bitte berichte diesen Stacktrace auf ${GITHUB_ISSUES_URL}"
@@ -390,6 +395,10 @@ function filtertest() {
 
 }
 
+function nop() {
+	:			# just display version number
+}
+
 function invalid_option() {
     write_to_console $MSG_OPTION_ERROR
     write_to_console $MSG_HELP
@@ -417,18 +426,76 @@ function help() {
     write_to_console "${MSG_HELP}"
 }
 
+<<<<<<< HEAD
 function get_latest_update { # url
     local last_update
+=======
+function retrieveTrackerUrls() {
+
+	local url regex
+	local tmpfile=$(mktemp)
+
+	write_to_console ${MSG_DOWNLOADING_URL} "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
+	if ! wget -qO ${tmpfile} ${GITHUB_TRACKER_URLs_DOWNLOAD_URL}; then
+		write_to_console "${MSG_DOWNLOAD_FAILED}" "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
+		abort
+	fi
+
+	while IFS=$'\t' read -r url regex; do
+		[[ $url =~ ^# ]] && continue			# skip comments
+		TRACKER_URLs[${url}]="$regex"
+	done < ${tmpfile}
+	rm ${tmpfile}
+>>>>>>> d7f64a65fa3d7b913b4e994c2d42acc3de462867
 
     last_update=$(curl -sI "${1}" |sed -n 's/Last-Modified: //p')
     last_update=$(date '+%s' -d "${last_update}")
     echo ${last_update}
 }
 
+<<<<<<< HEAD
 function downloadTrackerFiles() {
     local name url regex
     local urlfile=$(mktemp)
     local tmpfile=$(mktemp)
+=======
+function downloadTrackerFiles () {
+
+	retrieveTrackerUrls
+
+    # Download der hosts Dateien
+    # Entfernen von carriage returns
+    # Entfernen von localhost und broadcast Adressen
+    # Entfernen von allen Kommentaren
+    # Entfernen aller Zeilen, die nicht mit 0.0.0.0 beginnen
+    # Entfernen von Leerzeilen
+
+    local url regex src
+
+	# remove old configs
+	! oldFilesCount=$(ls -1 ${ETC_HOSTS_TRACKER_FILTER} 2>/dev/null | wc -l)
+	if (( oldFilesCount > 0 )); then
+		write_to_console "${MSG_CLEANING_UP_TRACKER_FILES}" "$oldFilesCount"
+    	for file in $(ls -1 $ETC_HOSTS_TRACKER_FILTER 2>/dev/null); do
+			rm $file &>/dev/null
+		done
+	fi
+
+	local cnt=10
+	local tmpfile=$(mktemp)
+
+    for url in "${!TRACKER_URLs[@]}"; do
+		regex="${TRACKER_URLs[$url]}"
+		write_to_console "${MSG_PROCESSING_URL}" "$url"
+		if ! wget -qO "${tmpfile}" "$url"; then
+			write_to_console "${MSG_DOWNLOAD_FAILED}" "$url"
+			abort
+		fi
+		printf "%b" "${regex}" | sed -f - ${tmpfile} > "${ETC_HOSTS_D_DIR}/${cnt}-blocklist"
+		: $(( cnt++ ))
+	done
+	rm $tmpfile
+>>>>>>> d7f64a65fa3d7b913b4e994c2d42acc3de462867
 
     write_to_console ${MSG_DOWNLOADING_URL} "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
     if ! wget -qO ${urlfile} ${GITHUB_TRACKER_URLs_DOWNLOAD_URL}; then
@@ -579,6 +646,11 @@ if [ $# -gt 0 ]; then
                 : $(( basic_cmd_cnt++ ))
                 filter_option_allowed=0
                 shift ;;
+            --version|-v)
+                cmd="nop"
+                : $(( basic_cmd_cnt++ ))
+                filter_option_allowed=0
+                shift ;;
 
             # options
             --filter|-f)
@@ -609,5 +681,7 @@ fi
 if (( ! filter_option_allowed )) &&  [ $use_filter == true ]; then
     invalid_option
 fi
+
+write_to_console $MSG_VERSION
 
 $cmd
