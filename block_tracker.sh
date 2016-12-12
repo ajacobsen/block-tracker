@@ -145,6 +145,8 @@ MSG_DE[$MSG_TRACKER_FILE_UPTODATE]="Datei %b ist aktuell, überspringe"
 
 MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
+MSG_EN[$MSG_UNKNOWN_OPTION]="Unknown option %b"
+MSG_DE[$MSG_UNKNOWN_OPTION]="UngültigeOption %b"
 MSG_UNEXPECTED_ERROR=$((MSG_CNT++))
 MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured in version %b. Please report following stacktrace on ${GITHUB_ISSUES_URL}"
 MSG_DE[$MSG_UNEXPECTED_ERROR]="Ein nicht erwarteter Fehler trat in version %b auf. Bitte berichte diesen Stacktrace auf ${GITHUB_ISSUES_URL}"
