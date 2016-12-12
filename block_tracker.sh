@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # *Credits*
-# I acknowledge and I'm grateful to framps (framp at linux-tips-and-tricks dot de)
+# I acknowledge and I'm grateful to framp (framp at linux-tips-and-tricks dot de)
 # for his contribution to block_tracker.
 
 set -e -o pipefail -o errtrace                          # see https://sipb.mit.edu/doc/safe-shell/
@@ -54,7 +54,7 @@ fi
 
 FILTER_CONFIG_FILE="/etc/${EXECUTABLE_NAME}.filter"
 CHECKSUM_FILE="/etc/${EXECUTABLE_NAME}.checksum"
-ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[12345]*-*" 
+ETC_HOSTS_TRACKER_FILTER="${ETC_HOSTS_D_DIR}/[12345]*-*"
 
 declare -A TRACKER_URLs
 
@@ -107,7 +107,7 @@ MSG_LATEST_VERSION=$((MSG_CNT++))
 MSG_EN[$MSG_LATEST_VERSION]="%b latest stable version: %b"
 MSG_DE[$MSG_LATEST_VERSION]="Neueste stabile Version von %b: %b"
 
-# Messages for installer
+  p# Messages for installer
 
 MSG_CNT=100
 MSG_CONFIRM_UNINSTALL=$((MSG_CNT++))
@@ -145,6 +145,11 @@ MSG_DE[$MSG_UPGRADE]="%b auf Version %b aktualisieren? [%b]"
 
 MSG_CNT=200
 MSG_UNKNOWN_OPTION=$((MSG_CNT++))
+MSG_EN[$MSG_UNKNOWN_OPTION]="Unknown option %b"
+MSG_DE[$MSG_UNKNOWN_OPTION]="Unbekannte Option %b"
+MSG_VERSION=$((MSG_CNT++))
+MSG_EN[$MSG_VERSION]="$EXECUTABLE_NAME - $VERSION"
+MSG_DE[$MSG_VERSION]="$EXECUTABLE_NAME - $VERSION"
 MSG_UNEXPECTED_ERROR=$((MSG_CNT++))
 MSG_EN[$MSG_UNEXPECTED_ERROR]="Unexpected error occured in version %b. Please report following stacktrace on ${GITHUB_ISSUES_URL}"
 MSG_DE[$MSG_UNEXPECTED_ERROR]="Ein nicht erwarteter Fehler trat in version %b auf. Bitte berichte diesen Stacktrace auf ${GITHUB_ISSUES_URL}"
@@ -416,20 +421,20 @@ function get_latest_version() {
 }
 
 function help() {
-    write_to_console "${MSG_HELP}"         
+    write_to_console "${MSG_HELP}"
 }
 
 function retrieveTrackerUrls() {
-	
+
 	local url regex
 	local tmpfile=$(mktemp)
-	
+
 	write_to_console ${MSG_DOWNLOADING_URL} "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
 	if ! wget -qO ${tmpfile} ${GITHUB_TRACKER_URLs_DOWNLOAD_URL}; then
 		write_to_console "${MSG_DOWNLOAD_FAILED}" "${GITHUB_TRACKER_URLs_DOWNLOAD_URL}"
 		abort
 	fi
-	
+
 	while IFS=$'\t' read -r url regex; do
 		[[ $url =~ ^# ]] && continue			# skip comments
 		TRACKER_URLs[${url}]="$regex"
@@ -439,16 +444,16 @@ function retrieveTrackerUrls() {
 }
 
 function downloadTrackerFiles () {
-	
+
 	retrieveTrackerUrls
-	
+
     # Download der hosts Dateien
     # Entfernen von carriage returns
     # Entfernen von localhost und broadcast Adressen
     # Entfernen von allen Kommentaren
     # Entfernen aller Zeilen, die nicht mit 0.0.0.0 beginnen
     # Entfernen von Leerzeilen
-    
+
     local url regex src
 
 	# remove old configs
@@ -459,12 +464,12 @@ function downloadTrackerFiles () {
 			rm $file &>/dev/null
 		done
 	fi
-	
+
 	local cnt=10
 	local tmpfile=$(mktemp)
 
     for url in "${!TRACKER_URLs[@]}"; do
-		regex="${TRACKER_URLs[$url]}"		
+		regex="${TRACKER_URLs[$url]}"
 		write_to_console "${MSG_PROCESSING_URL}" "$url"
 		if ! wget -qO "${tmpfile}" "$url"; then
 			write_to_console "${MSG_DOWNLOAD_FAILED}" "$url"
@@ -549,7 +554,7 @@ if [ $UID -ne 0 ]; then
     exit 1
 fi
 
-trap handleErrorTrap ERR 
+trap handleErrorTrap ERR
 
 use_filter=false
 basic_cmd_cnt=0
@@ -614,7 +619,7 @@ if [ $# -gt 0 ]; then
                 fi
                 shift ;;
             *)
-                write_to_console $MSG_UNKNOWN_OPTION "$1" 
+                write_to_console $MSG_UNKNOWN_OPTION "$1"
                 help
                 exit 1
                 ;;
@@ -634,5 +639,7 @@ fi
 if (( ! filter_option_allowed )) &&  [ $use_filter == true ]; then
     invalid_option
 fi
+
+write_to_console $MSG_VERSION
 
 $cmd
