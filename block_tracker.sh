@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # *Credits*
-# I acknowledge and I'm grateful to framps (framp at linux-tips-and-tricks dot de)
+# I acknowledge and I'm grateful to framp (framp at linux-tips-and-tricks dot de)
 # for his contribution to block_tracker.
 
 set -e -o pipefail -o errtrace                          # see https://sipb.mit.edu/doc/safe-shell/
@@ -107,7 +107,7 @@ MSG_LATEST_VERSION=$((MSG_CNT++))
 MSG_EN[$MSG_LATEST_VERSION]="%b latest stable version: %b"
 MSG_DE[$MSG_LATEST_VERSION]="Neueste stabile Version von %b: %b"
 
-# Messages for installer
+  p# Messages for installer
 
 MSG_CNT=100
 MSG_CONFIRM_UNINSTALL=$((MSG_CNT++))
