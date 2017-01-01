@@ -7,3 +7,4 @@
 # A lot of Minecraft mods use these and if you block them, you can't download those mods
 adf.ly
 adfoc.us
+# Note: This is the simplest way to exclude domains by specifying them explicitely. There are much more complicated Regex possible
