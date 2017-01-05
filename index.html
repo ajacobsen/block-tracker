@@ -20,6 +20,7 @@
 
         <section id="downloads">
           <a href="https://github.com/ajacobsen/block-tracker" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+          <a href="https://github.com/ajacobsen/block-tracker/edit/gh-pages/body.md" class="btn btn-github"><span class="icon"></span>Edit on GitHub</a>
         </section>
       </div>
     </header>
@@ -37,31 +38,30 @@
 
 <p>Execute following command to install block-tracker.</p>
 
-<pre><code>wget -O block-tracker-setup.sh https://raw.githubusercontent.com/ajacobsen/block-tracker/v0.0.3/block_tracker.sh &amp;&amp; sudo bash block-tracker-setup.sh --install &amp;&amp; rm block-tracker-setup.sh
+<pre><code>wget -O block-tracker-setup.sh https://raw.githubusercontent.com/ajacobsen/block-tracker/v0.0.4/block_tracker.sh &amp;&amp; sudo bash block-tracker-setup.sh --install &amp;&amp; rm block-tracker-setup.sh
 </code></pre>
 
-<p>This will create <code>/etc/hosts.d/</code> directory and
-copies <code>/etc/hosts</code> to <code>/etc/hosts.d/00-hosts</code>.</p>
+<p>This will create <code>/usr/local/etc/block-tracker/hosts/</code> directory and
+copies <code>/etc/hosts</code> to <code>/usr/local/etc/block-tracker/hosts/system.hosts</code>.</p>
 
-<p><em>Note</em>: <code>block-tracker</code> will concatenate all files from <code>/etc/hosts.d/</code> into one file <code>/etc/hosts</code>
+<p><em>Note</em>: <code>block-tracker</code> will concatenate *.hosts files from <code>/usr/local/etc/block-tracker/hosts/</code> into one file <code>/etc/hosts</code>
 which causes <code>/etc/hosts</code> to be overwritten every time when <code>block-tacker</code> is invoked.
-To add additional local entries which will not be overwritten you have to add them in <code>/etc/hosts.d/00-hosts</code>
-or you create an addional file called <code>/etc/hosts.d/01-myhost</code>
-Leading numbers (00, 01, ..) define the sequence the files will be concatenated.</p>
+To add additional local entries which will not be overwritten you have to add them in <code>/usr/local/etc/block-tracker/hosts/system.hosts</code>
+or you create an addional file called, e.g. <code>/usr/local/etc/block-tracker/hosts/name.hosts</code></p>
 
 <p>To uninstall <code>block-tracker</code> just invoke</p>
 
 <pre><code>sudo block-tracker --uninstall
 </code></pre>
 
-<p>During uninstall <code>/etc/hosts.d/00-hosts</code> will be copied to <code>/etc/hosts</code> and directory <code>/etc/hosts.d/</code> and file <code>/usr/local/bin/block-tracker</code> will be deleted.</p>
+<p>During uninstall <code>/usr/local/etc/block-tracker/hosts/system.hosts</code> will be copied to <code>/etc/hosts</code> and directory <code>/usr/local/etc/block-tracker/</code> and file <code>/usr/local/bin/block-tracker</code> will be deleted.</p>
 
 <p>After installation you have to invoke</p>
 
 <pre><code>sudo block-tracker --run
 </code></pre>
 
-<p>at least once. This will download the lists with bad domains (blocklists), save them to <code>/etc/hosts.d/</code> and enable blocking of all those domains.</p>
+<p>at least once. This will download the lists with bad domains (blocklists), save them to <code>/usr/local/etc/block-tracker/hosts/</code> and enable blocking of all those domains.</p>
 
 <p>To temporarily disable <code>block-tracker</code> invoke</p>
 
@@ -118,28 +118,27 @@ You should prefer <code>--enable</code> and use <code>--run</code> only if you w
 <pre><code>wget -O block-tracker-setup.sh https://raw.githubusercontent.com/ajacobsen/block-tracker/v0.0.2/block_tracker.sh &amp;&amp; sudo bash block-tracker-setup.sh --install &amp;&amp; rm block-tracker-setup.sh
 </code></pre>
 
-<p>Das erstellt den Ordner <code>/etc/hosts.d/</code> und kopiert die Datei <code>/etc/hosts</code> nach <code>/etc/hosts.d/00-hosts</code></p>
+<p>Das erstellt den Ordner <code>/usr/local/etc/block-tracker/hosts/</code> und kopiert die Datei <code>/etc/hosts</code> nach <code>/usr/local/etc/block-tracker/hosts/system.hosts</code></p>
 
-<p><em>Hinweis:</em> <code>block-tracker</code> fügt dann alle Dateien in <code>/etc/hosts.d/</code> zu einer <code>/etc/hosts</code>
+<p><em>Hinweis:</em> <code>block-tracker</code> fügt dann alle *.hosts Dateien in <code>/usr/local/etc/block-tracker/hosts/</code> zu einer <code>/etc/hosts</code>
 zusammen und dadurch wird die Datei <code>/etc/hosts</code> bei jedem Aufruf überschrieben.
-Um eigene Einträge aufzunehmen die nicht überschrieben werden, müssen diese entweder in <code>/etc/hosts.d/00-hosts</code>
+Um eigene Einträge aufzunehmen die nicht überschrieben werden, müssen diese entweder in <code>/usr/local/etc/block-tracker/hosts/system.hosts</code>
 eingetragen werden oder man erstellt eine weitere Datei und macht
-dort die gewünschten Einträge. Z.B. <code>/etc/hosts.d/01-meinedatei</code>
-Durch die führenden Zahlen (00, 01, ..) wird bestimmt in welcher Reihenfolge die Dateien zusammengesetzt werden.</p>
+dort die gewünschten Einträge. z.B. <code>/usr/local/etc/block-tracker/hosts/name.hosts</code></p>
 
 <p>Möchte man das Skript wieder deinstallieren, genügt dieser Befehl:</p>
 
 <pre><code>sudo block-tracker --uninstall
 </code></pre>
 
-<p>Dabei wird die Datei <code>/etc/hosts.d/00-hosts</code> wieder nach <code>/etc/hosts</code> kopiert und das Verzeichnis <code>/etc/hosts.d/</code> sowie die Datei <code>/usr/local/bin/block-tracker</code> gelöscht.</p>
+<p>Dabei wird die Datei <code>/usr/local/etc/block-tracker/hosts/system.hosts</code> wieder nach <code>/etc/hosts</code> kopiert und das Verzeichnis <code>/usr/local/etc/block-tracker/</code> sowie die Datei <code>/usr/local/bin/block-tracker</code> gelöscht.</p>
 
 <p>Nach der Installation muss</p>
 
 <pre><code>sudo block-tracker --run
 </code></pre>
 
-<p>ausgeführt werden, um die Blocklisten runterzuladen, in <code>/etc/hosts.d/</code> zu speichern</p>
+<p>ausgeführt werden, um die Blocklisten runterzuladen, in <code>/usr/local/etc/block-tracker/hosts/</code> zu speichern</p>
 
 <p>Um <code>block-tracker</code> vorübergehend zu deaktivieren, benutze</p>
 
