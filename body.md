@@ -1,4 +1,4 @@
-* <a href="#user-content-german">README in German</a>
+<a href="#user-content-german">README in German</a>
 
 ## English
 This script blocks advertisements by extending /etc/hosts to block specific websites.
